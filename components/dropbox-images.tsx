@@ -7,6 +7,17 @@ import { queryClient } from "config/ReactQueryClientProvider";
 import { getImageUrl } from "utils/supabase/storage";
 
 export default function DropboxImage({ image }) {
+  const updated = new Date(image.updated_at)
+    .toLocaleString("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Seoul",
+    })
+    .replace(",", "");
   const deleteFileMutation = useMutation({
     mutationFn: deleteFile,
     onSuccess: () => {
@@ -28,6 +39,11 @@ export default function DropboxImage({ image }) {
 
       {/* fileName */}
       <div>{image.name}</div>
+
+      {/* update time */}
+      <p className="flex justify-end text-gray-500">
+        마지막 수정 시간: {updated}
+      </p>
 
       {/* trash Button */}
       <div className="absolute top-4 right-4">

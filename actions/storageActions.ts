@@ -29,6 +29,7 @@ export async function searchFiles(search: string = "") {
   const { data, error } = await supabase.storage
     .from(process.env.NEXT_PUBLIC_STORAGE_BUCKET)
     .list(null, {
+      sortBy: { column: "updated_at", order: "desc" },
       search,
     });
 
