@@ -38,11 +38,11 @@ export default function DropboxImage({ image }) {
       </div>
 
       {/* fileName */}
-      <div>{image.name}</div>
+      <div className="truncate">{image.name}</div>
 
       {/* update time */}
-      <p className="flex justify-end text-gray-500">
-        마지막 수정 시간: {updated}
+      <p className="flex justify-end text-xs text-gray-500">
+        마지막 수정: {updated}
       </p>
 
       {/* trash Button */}
