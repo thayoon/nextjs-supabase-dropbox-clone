@@ -1,12 +1,33 @@
 "use client";
 
-import { IconButton, Spinner } from "@material-tailwind/react";
+import { IconButton, Spinner, Checkbox } from "@material-tailwind/react";
 import { useMutation } from "@tanstack/react-query";
 import { deleteFile } from "actions/storageActions";
 import { queryClient } from "config/ReactQueryClientProvider";
 import { getImageUrl } from "utils/supabase/storage";
 
-export default function DropboxImage({ image }) {
+export default function DropboxImage({
+  image,
+  isSelected,
+  setIsSelected,
+  setAllSelected,
+  totalLength,
+}) {
+  const isChecked = isSelected.includes(image.name);
+
+  const handleChecked = (checked) => {
+    setIsSelected((prev) => {
+      if (checked) {
+        const newSelected = [...prev, image.name];
+        if (newSelected.length === totalLength) setAllSelected(true);
+        return newSelected;
+      } else {
+        setAllSelected(false);
+        return prev.filter((item) => item !== image.name);
+      }
+    });
+  };
+
   const updated = new Date(image.updated_at)
     .toLocaleString("en-CA", {
       year: "numeric",
@@ -45,11 +66,21 @@ export default function DropboxImage({ image }) {
         마지막 수정: {updated}
       </p>
 
+      {/* multiple checkBox */}
+      <div className="absolute top-4 left-4">
+        <Checkbox
+          color="blue"
+          className="border-2 border-white bg-white/30 checked:border-white checked:bg-blue-500"
+          checked={isChecked}
+          onChange={(e) => handleChecked(e.target.checked)}
+        />
+      </div>
+
       {/* trash Button */}
       <div className="absolute top-4 right-4">
         <IconButton
           onClick={() => {
-            deleteFileMutation.mutate(image.name);
+            deleteFileMutation.mutate([image.name]);
           }}
           color="red"
         >

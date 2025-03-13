@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DropboxImage from "./dropbox-images";
-import { searchFiles } from "actions/storageActions";
+import { searchFiles, deleteFile } from "actions/storageActions";
 import {
   Spinner,
   Menu,
@@ -11,6 +11,7 @@ import {
   MenuItem,
   Button,
   Typography,
+  Checkbox,
 } from "@material-tailwind/react";
 import { useState } from "react";
 
@@ -21,13 +22,62 @@ const sortMenu = [
 export default function DropboxImageList({ searchInput }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [isLatest, setIsLatest] = useState(true);
+  const [allSelected, setAllSelected] = useState(false);
+  const [isSelected, setIsSelected] = useState([]);
+
   const searchImageQuery = useQuery({
     queryKey: ["images", searchInput],
     queryFn: () => searchFiles(searchInput),
   });
+  const deleteFileMutation = useMutation({
+    mutationFn: deleteFile,
+    onSuccess: () => {
+      searchImageQuery.refetch();
+    },
+  });
+
+  function handleChecked(isChecked) {
+    setAllSelected(isChecked);
+
+    if (isChecked && searchImageQuery.data) {
+      setIsSelected(searchImageQuery.data.map((image) => image.name));
+    } else {
+      setIsSelected([]);
+    }
+  }
+
   return (
     <div role="section">
-      <div className="flex flex-row-reverse">
+      <div className="flex justify-between">
+        <div className="flex justify-center items-center gap-3">
+          <Checkbox
+            color="blue"
+            label={
+              <Typography>
+                전체 선택 ({isSelected.length}/
+                {searchImageQuery.data && searchImageQuery.data.length}
+                {!searchImageQuery.data && 0})
+              </Typography>
+            }
+            checked={allSelected}
+            onChange={(e) => handleChecked(e.target.checked)}
+          />
+          <Button
+            className="rounded-full"
+            size="sm"
+            variant="outlined"
+            color={isSelected.length > 0 ? "blue" : "gray"}
+            disabled={isSelected.length > 0 ? false : true}
+            onClick={() => {
+              setIsSelected([]);
+              setAllSelected(false);
+              deleteFileMutation.mutate(isSelected);
+            }}
+          >
+            {deleteFileMutation.isPending ? <Spinner /> : "선택 삭제"}
+          </Button>
+        </div>
+
         <Menu open={openMenu} handler={setOpenMenu} allowHover>
           <MenuHandler>
             <Button
@@ -42,7 +92,7 @@ export default function DropboxImageList({ searchInput }) {
               />
             </Button>
           </MenuHandler>
-          <MenuList className="hidden gap-3 overflow-visible lg:grid">
+          <MenuList className="hidden gap-3 overflow-visible lg:grid grid">
             <ul className="flex w-full flex-col gap-1">
               {sortMenu.map(({ title, isLatest }) => (
                 <MenuItem key={title} onClick={() => setIsLatest(isLatest)}>
@@ -61,12 +111,28 @@ export default function DropboxImageList({ searchInput }) {
         {searchImageQuery.data &&
           (isLatest
             ? searchImageQuery.data.map((image) => (
-                <DropboxImage key={image.id} image={image} />
+                <DropboxImage
+                  key={image.id}
+                  image={image}
+                  isSelected={isSelected}
+                  setIsSelected={setIsSelected}
+                  setAllSelected={setAllSelected}
+                  totalLength={searchImageQuery.data.length}
+                />
               ))
             : searchImageQuery.data
                 .slice()
                 .reverse()
-                .map((image) => <DropboxImage key={image.id} image={image} />))}
+                .map((image) => (
+                  <DropboxImage
+                    key={image.id}
+                    image={image}
+                    isSelected={isSelected}
+                    setIsSelected={setIsSelected}
+                    setAllSelected={setAllSelected}
+                    totalLength={searchImageQuery.data.length}
+                  />
+                )))}
       </section>
     </div>
   );
